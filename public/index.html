@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Países — Evaluación módulo 7</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --gob-azul: #002B49;
+      --gob-rojo: #D52B1E;
+      --gob-gris: #F8F9FA;
+    }
+    body {
+      background-color: var(--gob-gris);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .header-gob {
+      background-color: var(--gob-azul);
+      border-bottom: 4px solid var(--gob-rojo);
+    }
+    .nav-gob .btn-gob {
+      color: #ffffff;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 6px 16px;
+    }
+    .nav-gob .btn-gob:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .nav-gob .btn-gob.active {
+      background-color: #ffffff;
+      color: var(--gob-azul);
+      font-weight: 600;
+    }
+    .card-gob {
+      border: 1px solid #DEE2E6;
+      border-top: 3px solid var(--gob-azul);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .btn-gob-primary {
+      background-color: var(--gob-azul);
+      color: white;
+      border: none;
+    }
+    .btn-gob-primary:hover {
+      background-color: #001f35;
+      color: white;
+    }
+    .btn-gob-danger {
+      background-color: var(--gob-rojo);
+      color: white;
+      border: none;
+    }
+    .btn-gob-danger:hover {
+      background-color: #b02116;
+      color: white;
+    }
+    .badge-gob {
+      background-color: #E9ECEF;
+      color: var(--gob-azul);
+      border: 1px solid #CED4DA;
+      font-weight: 500;
+    }
+    /* Estilos dinámicos para JS */
+    .seccion { display: none; }
+    .seccion.active { display: block; }
+  </style>
+</head>
+<body>
+
+<header class="header-gob text-white py-3 mb-4">
+  <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+    <div class="d-flex align-items-center gap-2">
+      <i class="fa-solid me-2 text-white"></i>
+      <h1 class="h4 m-0 fw-bold">Gobierno de Chile — PIB Mundial</h1>
+    </div>
+    
+    <nav class="nav-gob d-flex gap-2">
+      <button class="btn btn-gob active" onclick="cambiarSeccion('lista', this)">
+        <i class="fa-solid fa-list me-1"></i> Lista de países
+      </button>
+      <button class="btn btn-gob" onclick="cambiarSeccion('agregar', this)">
+        <i class="fa-solid fa-plus me-1"></i> Agregar país
+      </button>
+      <button class="btn btn-gob" onclick="cambiarSeccion('eliminar', this)">
+        <i class="fa-solid fa-trash me-1"></i> Eliminar país
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main class="container pb-5">
+
+  <div id="sec-lista" class="seccion active">
+    <div class="card card-gob bg-white p-4">
+      <h2 class="h5 fw-bold text-dark mb-3 pb-2 border-bottom">
+        <i class="fa-solid fa-table me-2 text-secondary"></i>Listado de países con PIB 2019 y 2020
+      </h2>
+
+      <div class="row g-3 align-items-center mb-3">
+        <div class="col-auto d-flex align-items-center gap-2">
+          <label for="limite" class="col-form-label col-form-label-sm fw-medium">Mostrar:</label>
+          <select id="limite" class="form-select form-select-sm" onchange="cambiarLimite()">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+          </select>
+        </div>
+
+        <div class="col-auto ms-auto d-flex align-items-center gap-2">
+          <button class="btn btn-outline-secondary btn-sm" id="btn-anterior" onclick="anterior()" disabled>
+            <i class="fa-solid fa-chevron-left me-1"></i> Anterior
+          </button>
+          <span id="info-pagina" class="badge badge-gob px-3 py-2">— de —</span>
+          <button class="btn btn-outline-secondary btn-sm" id="btn-siguiente" onclick="siguiente()">
+            Siguiente <i class="fa-solid fa-chevron-right ms-1"></i>
+          </button>
+          <button class="btn btn-gob-primary btn-sm ms-2" onclick="cargarPaises()">
+            <i class="fa-solid fa-rotate me-1"></i> Recargar
+          </button>
+        </div>
+      </div>
+
+      <div id="info-cursor" class="alert alert-info py-2 px-3 small" style="display:none"></div>
+
+      <div class="table-responsive mt-2">
+        <div id="tabla-paises">
+          <div class="text-center py-4 text-muted">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>Cargando países...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-agregar" class="seccion">
+    <div class="card card-gob bg-white p-4 mx-auto" style="max-width: 650px;">
+      <h2 class="h5 fw-bold text-dark mb-4 pb-2 border-bottom">
+        <i class="fa-solid fa-square-plus me-2 text-secondary"></i>Agregar nuevo país
+      </h2>
+
+      <form onsubmit="return false;">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-medium small">Nombre del país *</label>
+            <input type="text" id="a-nombre" class="form-control form-control-sm" placeholder="Ej: Portugal">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium small">Continente *</label>
+            <select id="a-continente" class="form-select form-select-sm">
+              <option value="">Selecciona...</option>
+              <option value="Europa">Europa</option>
+              <option value="America">América</option>
+              <option value="Asia">Asia</option>
+              <option value="Africa">África</option>
+              <option value="Oceania">Oceanía</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-medium small">Población *</label>
+            <input type="number" id="a-poblacion" class="form-control form-control-sm" placeholder="Ej: 10300000" min="1">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-medium small">PIB 2019 (USD) *</label>
+            <input type="number" id="a-pib2019" class="form-control form-control-sm" placeholder="Ej: 23000" min="1">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-medium small">PIB 2020 (USD) *</label>
+            <input type="number" id="a-pib2020" class="form-control form-control-sm" placeholder="Ej: 22500" min="1">
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mb-3">
+          <button class="btn btn-success btn-sm px-3" id="btn-agregar" onclick="agregarPais()">
+            <i class="fa-solid fa-check me-1"></i> Agregar país
+          </button>
+          <button class="btn btn-outline-secondary btn-sm px-3" onclick="limpiarAgregar()">Limpiar</button>
+        </div>
+
+        <div id="alerta-agregar"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="sec-eliminar" class="seccion">
+    <div class="card card-gob bg-white p-4 mx-auto" style="max-width: 500px;">
+      <h2 class="h5 fw-bold text-dark mb-4 pb-2 border-bottom">
+        <i class="fa-solid fa-trash-can me-2 text-danger"></i>Eliminar país
+      </h2>
+
+      <form onsubmit="return false;">
+        <div class="mb-4">
+          <label class="form-label fw-medium small">Nombre del país a eliminar *</label>
+          <input type="text" id="e-nombre" class="form-control form-control-sm" placeholder="Ej: Chile" list="lista-paises-datalist">
+          <datalist id="lista-paises-datalist"></datalist>
+        </div>
+
+        <div class="d-flex gap-2 mb-3">
+          <button class="btn btn-gob-danger btn-sm px-3" id="btn-eliminar" onclick="eliminarPais()">
+            <i class="fa-solid fa-trash me-1"></i> Eliminar
+          </button>
+          <button class="btn btn-outline-secondary btn-sm px-3" onclick="$('e-nombre').value = ''">Limpiar</button>
+        </div>
+
+        <div id="alerta-eliminar"></div>
+      </form>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="toast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="toast-body">
+        Mensaje
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  const $ = id => document.getElementById(id);
+  let offsetActual = 0;
+  let totalRegistros = 0;
+
+  // Instancia global del Toast de Bootstrap
+  let toastBS = null;
+  document.addEventListener('DOMContentLoaded', () => {
+    toastBS = new bootstrap.Toast($('toast'));
+  });
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function toast(txt, tipo = 'ok') {
+    const elToast = $('toast');
+    $('toast-body').textContent = txt;
+    
+    // Asignación de colores estándar de Bootstrap para Notificaciones
+    elToast.className = `toast align-items-center text-white border-0 ${tipo === 'ok' ? 'bg-success' : 'bg-danger'}`;
+    toastBS.show();
+  }
+
+  function alerta(id, txt, tipo) {
+    const el = $(id);
+    const mapBootstrap = { ok: 'alert-success', error: 'alert-danger', warn: 'alert-warning' };
+    const ic = { ok: 'fa-circle-check', error: 'fa-circle-xmark', warn: 'fa-triangle-exclamation' };
+    
+    el.innerHTML = `
+      <div class="alert ${mapBootstrap[tipo]} d-flex align-items-center py-2 px-3 m-0" role="alert">
+        <i class="fa-solid ${ic[tipo]} me-2"></i>
+        <div>${txt}</div>
+      </div>`;
+  }
+
+  function tagContinente(c) {
+    return `<span class="badge badge-gob">${c}</span>`;
+  }
+
+  function formatNum(n) {
+    return Number(n).toLocaleString('es-CL');
+  }
+
+  function cambiarSeccion(nombre, btn) {
+    document.querySelectorAll('.seccion').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-gob button').forEach(b => b.classList.remove('active'));
+    $(`sec-${nombre}`).classList.add('active');
+    btn.classList.add('active');
+    if (nombre === 'lista') cargarPaises();
+    if (nombre === 'eliminar') cargarDatalist();
+  }
+
+  // ── GET /paises con cursor y paginación ──────────────────────────────
+  async function cargarPaises() {
+    const limite = parseInt($('limite').value);
+    $('tabla-paises').innerHTML = `
+      <div class="text-center py-4 text-muted">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>Consultando con cursor...
+      </div>`;
+    
+    try {
+      const res  = await fetch(`/paises?limite=${limite}&offset=${offsetActual}`);
+      const json = await res.json();
+      if (!json.ok) { 
+        $('tabla-paises').innerHTML = `<div class="alert alert-warning m-0">${json.mensaje}</div>`; 
+        return; 
+      }
+
+      totalRegistros = json.total;
+      const inicio = offsetActual + 1;
+      const fin    = Math.min(offsetActual + json.data.length, totalRegistros);
+
+      // Info del cursor
+      $('info-cursor').style.display = 'block';
+      $('info-cursor').innerHTML = `<i class="fa-solid fa-database me-1"></i> <strong>pg-cursor:</strong> Leyendo registros ${inicio}–${fin} de ${totalRegistros} en un bloque de ${limite}`;
+      $('info-pagina').textContent = `${inicio}–${fin} de ${totalRegistros}`;
+
+      // Botones paginación
+      $('btn-anterior').disabled = offsetActual === 0;
+      $('btn-siguiente').disabled = fin >= totalRegistros;
+
+      if (json.data.length === 0) {
+        $('tabla-paises').innerHTML = '<div class="alert alert-secondary text-center m-0">No hay más registros.</div>';
+        return;
+      }
+
+      $('tabla-paises').innerHTML = `
+        <table class="table table-hover table-striped align-middle border m-0">
+          <thead class="table-light">
+            <tr>
+              <th>País</th>
+              <th>Continente</th>
+              <th class="text-end">Población</th>
+              <th class="text-end">PIB 2019 (USD)</th>
+              <th class="text-end">PIB 2020 (USD)</th>
+              <th class="text-end">Variación</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${json.data.map(p => {
+              const variacion = p.pib_2020 - p.pib_2019;
+              const colorClass = variacion >= 0 ? 'text-success' : 'text-danger';
+              const signo      = variacion >= 0 ? '+' : '';
+              return `
+                <tr>
+                  <td class="fw-bold text-dark">🌍 ${p.nombre}</td>
+                  <td>${tagContinente(p.continente)}</td>
+                  <td class="text-end">${formatNum(p.poblacion)}</td>
+                  <td class="text-end">$${formatNum(p.pib_2019)}</td>
+                  <td class="text-end">$${formatNum(p.pib_2020)}</td>
+                  <td class="text-end fw-bold ${colorClass}">${signo}${formatNum(variacion)}</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+
+    } catch {
+      $('tabla-paises').innerHTML = '<div class="alert alert-danger m-0"><i class="fa-solid fa-triangle-exclamation me-2"></i>Error al conectar con el servidor.</div>';
+    }
+  }
+
+  function cambiarLimite() { offsetActual = 0; cargarPaises(); }
+  function siguiente() { offsetActual += parseInt($('limite').value); cargarPaises(); }
+  function anterior() { offsetActual = Math.max(0, offsetActual - parseInt($('limite').value)); cargarPaises(); }
+
+  // ── POST /paises ──────────────────────────────────────────────────────
+  async function agregarPais() {
+    const nombre     = $('a-nombre').value.trim();
+    const continente = $('a-continente').value;
+    const poblacion  = $('a-poblacion').value;
+    const pib_2019   = $('a-pib2019').value;
+    const pib_2020   = $('a-pib2020').value;
+    const btn        = $('btn-agregar');
+
+    if (!nombre || !continente || !poblacion || !pib_2019 || !pib_2020) {
+      alerta('alerta-agregar', 'Todos los campos son obligatorios.', 'error'); return;
+    }
+
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Agregando...';
+    try {
+      const res  = await fetch('/paises', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ nombre, continente, poblacion, pib_2019, pib_2020 })
+      });
+      const json = await res.json();
+      if (!json.ok) { alerta('alerta-agregar', json.mensaje, res.status === 409 ? 'warn' : 'error'); }
+      else {
+        alerta('alerta-agregar', json.mensaje, 'ok');
+        toast(`${nombre} agregado ✓`, 'ok');
+        limpiarAgregar();
+      }
+    } catch { alerta('alerta-agregar', 'Error al conectar con el servidor', 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Agregar país'; }
+  }
+
+  function limpiarAgregar() {
+    ['a-nombre', 'a-poblacion', 'a-pib2019', 'a-pib2020'].forEach(id => $(id).value = '');
+    $('a-continente').value = '';
+  }
+
+  // ── DELETE /paises ────────────────────────────────────────────────────
+  async function eliminarPais() {
+    const nombre = $('e-nombre').value.trim();
+    const btn    = $('btn-eliminar');
+    if (!nombre) { alerta('alerta-eliminar', 'Ingresa el nombre del país a eliminar.', 'error'); return; }
+    if (!confirm(`¿Eliminar "${nombre}" de la base de datos?`)) return;
+
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Eliminando...';
+    try {
+      const res  = await fetch(`/paises?nombre=${encodeURIComponent(nombre)}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!json.ok) { alerta('alerta-eliminar', json.mensaje, res.status === 404 ? 'warn' : 'error'); }
+      else {
+        alerta('alerta-eliminar', json.mensaje, 'ok');
+        toast(`${nombre} eliminado ✓`, 'ok');
+        $('e-nombre').value = '';
+        cargarDatalist();
+      }
+    } catch { alerta('alerta-eliminar', 'Error al conectar con el servidor', 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-trash me-1"></i> Eliminar'; }
+  }
+
+  // Cargar datalist con nombres de países para autocompletar
+  async function cargarDatalist() {
+    try {
+      const res  = await fetch('/paises?limite=50&offset=0');
+      const json = await res.json();
+      if (!json.ok) return;
+      $('lista-paises-datalist').innerHTML = json.data.map(p =>
+        `<option value="${p.nombre}">`).join('');
+    } catch {}
+  }
+
+  cargarPaises();
+</script>
+</body>
+</html>
